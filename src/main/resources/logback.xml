@@ -1,35 +1,62 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-		<encoder charset="UTF-8">
-			<pattern>%d{yyyy-MM-dd HH:mm:ss,GMT+8} %-5p [%t] - %m%n
-			</pattern>
-		</encoder>
-	</appender>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>DEBUG</level>
+        </filter>
+        <immediateFlush>false</immediateFlush>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %X
+                %logger{32}.%M:%L - %msg%n
+            </pattern>
+        </layout>
+    </appender>
 
-	<appender name="FILE"
-		class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<file>${user.home}/logs/consolelogs/rocketmq-console.log</file>
-		<append>true</append>
-		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<fileNamePattern>${user.home}/logs/consolelogs/rocketmq-console-%d{yyyy-MM-dd}.%i.log
-			</fileNamePattern>
-			<timeBasedFileNamingAndTriggeringPolicy
-				class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-				<maxFileSize>104857600</maxFileSize>
-			</timeBasedFileNamingAndTriggeringPolicy>
-			<MaxHistory>10</MaxHistory>
-		</rollingPolicy>
-		<encoder>
-			<pattern>%d{yyyy-MM-dd HH:mm:ss,GMT+8} %-5p [%t] - %m%n
-			</pattern>
-			<charset class="java.nio.charset.Charset">UTF-8</charset>
-		</encoder>
-	</appender>
+    <appender name="FILE"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>/opt/logs/consolelogs/rocketmq-console.log</file>
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>/opt/logs/consolelogs/rocketmq-console-%d{yyyy-MM-dd}.%i.log
+            </fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy
+                    class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>104857600</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <MaxHistory>10</MaxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss,GMT+8} %-5p [%t] - %m%n
+            </pattern>
+            <charset class="java.nio.charset.Charset">UTF-8</charset>
+        </encoder>
+    </appender>
 
-	<root level="INFO">
-		<appender-ref ref="STDOUT" />
-		<appender-ref ref="FILE" />
-	</root>
+    <!-- 添加appender：ALERT_MONITOR -->
+    <appender name="ALERT_MONITOR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 如果是tomcat，则是 /opt/logs/tomcat/alert_monitor.log -->
+        <file>/opt/logs/jetty/alert_monitor.log</file>
+        <Append>true</Append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>/opt/logs/jetty/bak/alert_monitor.%d{yyyy-MM-dd}.log.zip</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <charset>utf-8</charset>
+            <!-- <ImmediateFlush>false</ImmediateFlush> -->
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger{32}.%M:%L %msg%n%xException%n</pattern>
+        </encoder>
+    </appender>
+
+
+    <logger name="alert" additivity="false">
+        <level value="INFO"/>
+        <appender-ref ref="ALERT_MONITOR"/>
+    </logger>
+
+    <root level="DEBUG">
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="FILE" />
+    </root>
 
 </configuration> 

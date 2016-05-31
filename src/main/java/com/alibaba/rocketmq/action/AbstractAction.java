@@ -1,15 +1,13 @@
 package com.alibaba.rocketmq.action;
 
-import java.util.Collection;
-import java.util.Enumeration;
-
-import javax.servlet.http.HttpServletRequest;
-
+import com.alibaba.rocketmq.common.Table;
 import org.apache.commons.cli.Option;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.ui.ModelMap;
 
-import com.alibaba.rocketmq.common.Table;
+import javax.servlet.http.HttpServletRequest;
+import java.util.Collection;
+import java.util.Enumeration;
 
 
 /**
@@ -64,11 +62,17 @@ public abstract class AbstractAction {
     }
 
 
+    /**
+     * 在控制器中，一定要有这个方法
+     * @param map
+     * @param title
+     */
     protected void putPublicAttribute(ModelMap map, String title) {
         map.put(getFlag(), "active");
         map.put(TITLE, getName() + ":" + title);
-        map.put(BODY_PAGE, getName().toLowerCase() + "/" + title + ".vm");
-        map.put(FORM_ACTION, title + ".do");
+        map.put(BODY_PAGE, getName().toLowerCase() + "/" + title + ".vm"); // 这个表示 BodyPage 的组成路径
+
+        map.put(FORM_ACTION, title + ".do"); // 这个表示请求 action
     }
 
 

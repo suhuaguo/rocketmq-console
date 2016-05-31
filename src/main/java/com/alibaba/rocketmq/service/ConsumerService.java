@@ -1,19 +1,5 @@
 package com.alibaba.rocketmq.service;
 
-import static com.alibaba.rocketmq.common.Tool.str;
-import static org.apache.commons.lang.StringUtils.isNotBlank;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-
-import org.apache.commons.cli.Option;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
 import com.alibaba.rocketmq.common.MQVersion;
 import com.alibaba.rocketmq.common.MixAll;
 import com.alibaba.rocketmq.common.Table;
@@ -22,20 +8,30 @@ import com.alibaba.rocketmq.common.admin.ConsumeStats;
 import com.alibaba.rocketmq.common.admin.OffsetWrapper;
 import com.alibaba.rocketmq.common.message.MessageQueue;
 import com.alibaba.rocketmq.common.protocol.body.ConsumerConnection;
+import com.alibaba.rocketmq.common.protocol.body.GroupList;
 import com.alibaba.rocketmq.common.protocol.body.TopicList;
 import com.alibaba.rocketmq.common.protocol.heartbeat.ConsumeType;
 import com.alibaba.rocketmq.common.protocol.heartbeat.MessageModel;
 import com.alibaba.rocketmq.common.subscription.SubscriptionGroupConfig;
+import com.alibaba.rocketmq.tool.DateTool;
 import com.alibaba.rocketmq.tools.admin.DefaultMQAdminExt;
 import com.alibaba.rocketmq.tools.command.CommandUtil;
 import com.alibaba.rocketmq.tools.command.consumer.ConsumerProgressSubCommand;
 import com.alibaba.rocketmq.tools.command.consumer.DeleteSubscriptionGroupCommand;
 import com.alibaba.rocketmq.tools.command.consumer.UpdateSubGroupSubCommand;
 import com.alibaba.rocketmq.validate.CmdTrace;
+import org.apache.commons.cli.Option;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
+
+import static com.alibaba.rocketmq.common.Tool.str;
+import static org.apache.commons.lang.StringUtils.isNotBlank;
 
 
 /**
- * 
  * @author yankai913@gmail.com
  * @date 2014-2-18
  */
@@ -73,8 +69,8 @@ public class ConsumerService extends AbstractService {
                 // "#Diff" //
                 // );
                 String[] thead =
-                        new String[] { "#Topic", "#Broker Name", "#QID", "#Broker Offset",
-                                      "#Consumer Offset", "#Diff" };
+                        new String[]{"#Topic", "#Broker Name", "#QID", "#Broker Offset",
+                                "#Consumer Offset", "#Diff"};
                 long diffTotal = 0L;
                 Table table = new Table(thead, mqList.size());
                 for (MessageQueue mq : mqList) {
@@ -111,8 +107,7 @@ public class ConsumerService extends AbstractService {
                 table.addExtData("Diff Total:", str(diffTotal));
 
                 return table;
-            }
-            else {
+            } else {
                 // System.out.printf("%-32s  %-6s  %-24s %-5s  %-14s  %-7s  %s\n",//
                 // "#Group",//
                 // "#Count",//
@@ -124,8 +119,8 @@ public class ConsumerService extends AbstractService {
                 // );
 
                 String[] thead =
-                        new String[] { "#Group", "#Count", "#Version", "#Type", "#Model", "#TPS",
-                                      "#Diff Total" };
+                        new String[]{"#Group", "#Count", "#Version", "#Type", "#Model", "#TPS",
+                                "#Diff Total"};
 
                 List<GroupConsumeInfo> groupConsumeInfoList = new LinkedList<GroupConsumeInfo>();
                 TopicList topicList = defaultMQAdminExt.fetchAllTopicList();
@@ -137,16 +132,14 @@ public class ConsumerService extends AbstractService {
                             ConsumeStats consumeStats = null;
                             try {
                                 consumeStats = defaultMQAdminExt.examineConsumeStats(tconsumerGroup);
-                            }
-                            catch (Exception e) {
+                            } catch (Exception e) {
                                 logger.warn("examineConsumeStats exception, " + tconsumerGroup, e);
                             }
 
                             ConsumerConnection cc = null;
                             try {
                                 cc = defaultMQAdminExt.examineConsumerConnectionInfo(tconsumerGroup);
-                            }
-                            catch (Exception e) {
+                            } catch (Exception e) {
                                 logger.warn("examineConsumerConnectionInfo exception, " + tconsumerGroup, e);
                             }
 
@@ -166,8 +159,7 @@ public class ConsumerService extends AbstractService {
                             }
 
                             groupConsumeInfoList.add(groupConsumeInfo);
-                        }
-                        catch (Exception e) {
+                        } catch (Exception e) {
                             logger.warn("examineConsumeStats or examineConsumerConnectionInfo exception, "
                                     + tconsumerGroup, e);
                         }
@@ -200,12 +192,10 @@ public class ConsumerService extends AbstractService {
                 }
             }
 
-        }
-        catch (Throwable e) {
+        } catch (Throwable e) {
             logger.error(e.getMessage(), e);
             t = e;
-        }
-        finally {
+        } finally {
             shutdownDefaultMQAdminExt(defaultMQAdminExt);
         }
         throw t;
@@ -233,8 +223,7 @@ public class ConsumerService extends AbstractService {
                 // groupName,addr);
 
                 return true;
-            }
-            else if (isNotBlank(clusterName)) {
+            } else if (isNotBlank(clusterName)) {
                 adminExt.start();
 
                 Set<String> masterSet = CommandUtil.fetchMasterAddrByClusterName(adminExt, clusterName);
@@ -245,16 +234,13 @@ public class ConsumerService extends AbstractService {
                     // groupName, master, clusterName);
                 }
                 return true;
-            }
-            else {
+            } else {
                 throw new IllegalStateException("brokerAddr or clusterName can not be all blank");
             }
-        }
-        catch (Throwable e) {
+        } catch (Throwable e) {
             logger.error(e.getMessage(), e);
             t = e;
-        }
-        finally {
+        } finally {
             shutdownDefaultMQAdminExt(adminExt);
         }
         throw t;
@@ -270,8 +256,8 @@ public class ConsumerService extends AbstractService {
 
     @CmdTrace(cmdClazz = UpdateSubGroupSubCommand.class)
     public boolean updateSubGroup(String brokerAddr, String clusterName, String groupName,
-            String consumeEnable, String consumeFromMinEnable, String consumeBroadcastEnable,
-            String retryQueueNums, String retryMaxTimes, String brokerId, String whichBrokerWhenConsumeSlowly)
+                                  String consumeEnable, String consumeFromMinEnable, String consumeBroadcastEnable,
+                                  String retryQueueNums, String retryMaxTimes, String brokerId, String whichBrokerWhenConsumeSlowly)
             throws Throwable {
         Throwable t = null;
         DefaultMQAdminExt defaultMQAdminExt = getDefaultMQAdminExt();
@@ -292,13 +278,13 @@ public class ConsumerService extends AbstractService {
             // consumeFromMinEnable
             if (isNotBlank(consumeFromMinEnable)) {
                 subscriptionGroupConfig.setConsumeFromMinEnable(Boolean.parseBoolean(consumeFromMinEnable
-                    .trim()));
+                        .trim()));
             }
 
             // consumeBroadcastEnable
             if (isNotBlank(consumeBroadcastEnable)) {
                 subscriptionGroupConfig.setConsumeBroadcastEnable(Boolean.parseBoolean(consumeBroadcastEnable
-                    .trim()));
+                        .trim()));
             }
 
             // retryQueueNums
@@ -319,7 +305,7 @@ public class ConsumerService extends AbstractService {
             // whichBrokerWhenConsumeSlowly
             if (isNotBlank(whichBrokerWhenConsumeSlowly)) {
                 subscriptionGroupConfig.setWhichBrokerWhenConsumeSlowly(Long
-                    .parseLong(whichBrokerWhenConsumeSlowly.trim()));
+                        .parseLong(whichBrokerWhenConsumeSlowly.trim()));
             }
 
             if (isNotBlank(brokerAddr)) {
@@ -332,8 +318,7 @@ public class ConsumerService extends AbstractService {
                 // System.out.println(subscriptionGroupConfig);
                 return true;
 
-            }
-            else if (isNotBlank(clusterName)) {
+            } else if (isNotBlank(clusterName)) {
 
                 defaultMQAdminExt.start();
 
@@ -346,21 +331,179 @@ public class ConsumerService extends AbstractService {
                 }
                 // System.out.println(subscriptionGroupConfig);
                 return true;
-            }
-            else {
+            } else {
                 throw new IllegalStateException("brokerAddr or clusterName can not be all blank");
             }
 
-        }
-        catch (Throwable e) {
+        } catch (Throwable e) {
             logger.error(e.getMessage(), e);
             t = e;
+        } finally {
+            shutdownDefaultMQAdminExt(defaultMQAdminExt);
+        }
+
+        throw t;
+    }
+
+
+    /**
+     * 抓取所有的 GroupName,并显示 Topic 的关系
+     *
+     * @return
+     */
+    public Table consumerProgressList() {
+        DefaultMQAdminExt defaultMQAdminExt = getDefaultMQAdminExt();
+        defaultMQAdminExt.setInstanceName(Long.toString(System.currentTimeMillis()));
+        Table table = null;
+
+        try {
+            defaultMQAdminExt.start(); // 这样的话，mqClientInstance 这个属性才不是为空
+
+            TopicList topicList = defaultMQAdminExt.fetchAllTopicList();
+
+            String[] thead = new String[]{"GroupName", "Topic", "Count", "Version", "Type", "Model", "TPS", "Diff Total", "Last Time", "Behind"};
+
+            // 两个参数：表头  rowNum
+            table = new Table(thead, topicList.getTopicList().size());
+
+            for (String topic : topicList.getTopicList()) {
+                // 消费的最后一条消息对应的时间戳
+                long lastTimestamp = 0L;
+                HashMap<MessageQueue, OffsetWrapper> offsetTable = new HashMap<>();
+
+                if (!topic.startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX)) { // 不是以那个前缀开头
+
+                    GroupList list = defaultMQAdminExt.queryTopicConsumeByWho(topic); // 得到该 Topic 下的所有消费者列表
+                    if (list == null) {
+                        continue;
+                    }
+                    HashSet<String> groupList = list.getGroupList();
+                    if (groupList == null || groupList.size() == 0) {
+                        continue;
+
+                    }
+                    Iterator iterator = groupList.iterator();
+                    while (iterator.hasNext()) {
+                        String consumerGroup = String.valueOf(iterator.next());
+                        try {
+                            ConsumeStats consumeStats = null;
+                            try {
+
+                                consumeStats = defaultMQAdminExt.examineConsumeStats(consumerGroup);
+                                offsetTable = consumeStats.getOffsetTable();
+
+                            } catch (Exception e) {
+                                logger.warn("examineConsumeStats exception, " + consumerGroup, e);
+                            }
+
+                            ConsumerConnection cc = null;
+                            try {
+                                cc = defaultMQAdminExt.examineConsumerConnectionInfo(consumerGroup);
+                            } catch (Exception e) {
+                                logger.warn("examineConsumerConnectionInfo exception, " + consumerGroup, e);
+                            }
+
+                            GroupConsumeInfo groupConsumeInfo = new GroupConsumeInfo();
+                            groupConsumeInfo.setGroup(consumerGroup);
+
+                            if (consumeStats != null) {
+                                groupConsumeInfo.setConsumeTps((int) consumeStats.getConsumeTps());
+                                groupConsumeInfo.setDiffTotal(consumeStats.computeTotalDiff());
+                            }
+
+                            if (cc != null) {
+
+                                groupConsumeInfo.setCount(cc.getConnectionSet().size());
+                                groupConsumeInfo.setMessageModel(cc.getMessageModel());
+                                groupConsumeInfo.setConsumeType(cc.getConsumeType());
+                                groupConsumeInfo.setVersion(cc.computeMinVersion());
+                            }
+
+
+                            // 循环取得消费最后的时间值
+                            Iterator iter = offsetTable.entrySet().iterator();
+                            while (iter.hasNext()) {
+                                Map.Entry entry = (Map.Entry) iter.next();
+                                OffsetWrapper val = (OffsetWrapper) entry.getValue();
+                                if (val.getLastTimestamp() > lastTimestamp) {
+                                    lastTimestamp = val.getLastTimestamp();
+                                }
+                            }
+
+
+                            Object[] tr = table.createTR();
+                            tr[0] = UtilAll.frontStringAtLeast(groupConsumeInfo.getGroup(), 32);
+                            tr[1] = topic;
+                            tr[2] = str(groupConsumeInfo.getCount());
+                            tr[3] = groupConsumeInfo.getCount() > 0 ? groupConsumeInfo.versionDesc() : "OFFLINE";
+                            tr[4] = groupConsumeInfo.consumeTypeDesc();
+                            tr[5] = groupConsumeInfo.messageModelDesc();
+                            tr[6] = groupConsumeInfo.getConsumeTps();
+                            tr[7] = groupConsumeInfo.getDiffTotal();
+                            tr[8] = DateTool.parseToDate(lastTimestamp);                                        // 得到最后一次的消费之间
+                            if (groupConsumeInfo.getConsumeTps() != 0) {
+                                tr[9] = (groupConsumeInfo.getDiffTotal()) / (groupConsumeInfo.getConsumeTps());     // 计算落后延迟
+                            } else {
+                                tr[9] = 0;
+                            }
+
+
+                            table.insertTR(tr);
+
+                        } catch (Exception e) {
+                            logger.warn("examineConsumeStats or examineConsumerConnectionInfo exception, "
+                                    + consumerGroup, e);
+                        }
+
+                    }
+
+
+                }
+            }
+
+        } catch (Exception e) {
+            logger.error(e.getMessage());
         }
         finally {
             shutdownDefaultMQAdminExt(defaultMQAdminExt);
         }
 
-        throw t;
+        return table;
+
+    }
+
+
+    /**
+     * 抓取所有的 ConsumerProup 。所有的 ConsumerGroup 都是以 %RETRY% 作为前缀的
+     *
+     * @return 所有消费组的名称
+     */
+    public List<String> fetchAllConsumerGroup() {
+        List<String> consumerGroupList = new ArrayList<String>();
+
+        DefaultMQAdminExt defaultMQAdminExt = getDefaultMQAdminExt();
+        defaultMQAdminExt.setInstanceName(Long.toString(System.currentTimeMillis()));
+
+        try {
+            defaultMQAdminExt.start(); // 这样的话，mqClientInstance 这个属性才不是为空
+
+            TopicList topicList = defaultMQAdminExt.fetchAllTopicList();
+
+
+            for (String topic : topicList.getTopicList()) {
+                if (topic.startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX)) {
+                    String consumerGroup = topic.substring(MixAll.RETRY_GROUP_TOPIC_PREFIX.length());
+                    consumerGroupList.add(consumerGroup);
+                }
+            }
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+        }
+        finally {
+            shutdownDefaultMQAdminExt(defaultMQAdminExt);
+        }
+
+        return consumerGroupList;
     }
 }
 
