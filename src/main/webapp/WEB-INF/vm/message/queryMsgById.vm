@@ -1,2 +1,169 @@
+#* 表格产生 *#
 #form($options $action)
-#table($table)
+
+
+#* $table 已经转换成了 两列了 *#
+
+
+<table class="table table-bordered table-hover" style=" table-layout:fixed;" id="detail">
+
+    <thead>
+    <tr>
+        <th>客户端地址</th>
+        <th>订阅者</th>
+        <th>消费情况</th>
+        <th>
+            <button class="btn btn-sm btn-success" type="button" onclick="retry_deliver()">重新投递</button>
+        </th>
+    </tr>
+    </thead>
+    #foreach($tr in $!table.extData.entrySet())
+        <tr>
+
+        #* key clientId,group*#
+            #foreach($key in $tr.key.split(";"))
+                #if($key.contains("@"))
+                    <td><input type="checkbox" name="check_name">      $key
+                    </td>
+
+                #else
+                    <td>
+                        <a target='_blank' href='$root/connection/consumerConnection.do?consumerGroup=$key'>
+                            <label data-toggle="tooltip" data-placement="right" title="点击查看详细！">$key</label>
+                        </a>
+                    </td>
+                #end
+            #end
+
+        #* value *#
+            #if($tr.value=="SUBSCRIBED_AND_CONSUMED")
+                <td><label style="color: green;">订阅了，而且消费了</label></td>
+
+            #elseif($tr.value=="SUBSCRIBED_BUT_FILTERD")
+                <td>订阅了，但是被过滤掉了</td>
+
+            #elseif($tr.value=="SUBSCRIBED_BUT_PULL")
+                <td>订阅了，但是是PULL，结果未知</td>
+
+            #elseif($tr.value=="SUBSCRIBED_AND_NOT_CONSUME_YET")
+                <td>订阅了，但是没有消费（线上忽略）</td>
+            #end
+
+
+        </tr>
+    #end
+
+</table>
+
+#* 显示 消息的详细信息 *#
+<table class="table table-bordered table-hover" width="200px;" style="200px;">
+    <thead>
+    <tr>
+        <th>属性</th>
+        <th>详细信息</th>
+    </tr>
+    </thead>
+    <tbody>
+        #foreach($tr in $!table.tbodyData)
+        <tr>
+            #foreach($td in $tr)
+                <td>$td</td>
+            #end
+        </tr>
+        #end
+    </tbody>
+</table>
+
+
+<div class="modal fade" id="deliver" tabindex="-1" role="dialog" aria-labelledby="deliverModalLabel" aria-hidden="true"
+     style="width: 600px;height:200px;padding-left: 15px;">
+    消息广播投递成功，MsgId：
+</div>
+
+
+<script language="javascript">
+
+    function retry_deliver() {
+        var clientId = "";
+        var groupName = "";
+
+
+        // 只获获取选中的啦
+        $("input:checkbox[name=check_name]:checked").each(function (i) {
+            console.info
+            clientId = clientId + $(this).parent().text().trim() + ",";
+            groupName = groupName + $(this).parent().next().find('label').text().trim() + ",";
+
+            console.info("clientId---" + clientId + "groupName---" + groupName);
+
+        });
+
+
+        $.ajax({
+            type: 'POST',
+            url: '$root/message_ajax/consumeMessageDirectly.do',
+            data: {
+                'consumerGroupList': groupName.substring(0, groupName.length - 1),
+                'clientIdList': clientId.substring(0, clientId.length - 1),
+                'msgId': $("input[name='msgId']").attr("value")
+            },
+            success: function (response, status, xhr) {
+                $("#deliver").text("").append("消息单向投递情况：");
+
+                var contentList = response.split(";");
+                for (var i = 0; i < contentList.length; i++) {
+                    $("#deliver").append("<br/>" + untils(contentList[i]));
+                }
+
+                $('#deliver').modal('show');
+            },
+            error: function () {
+                alert("重新投递失败！！！");
+            }
+        });
+
+    }
+
+    function untils(content) {
+
+        var tmpList = content.split(",");
+        console.info(tmpList[1].trim());
+
+
+        tmpList[0] = "客户端地址：" + tmpList[0];
+        tmpList[1] = "订阅者：" + tmpList[1];
+        if (tmpList[2].trim() == 'CR_SUCCESS') {
+            tmpList[2] = ' 消费成功 '
+        } else if (tmpList[2].trim() == 'CR_LATER') {
+            tmpList[2] = ' 被过滤 '
+        }
+        else {
+            tmpList[2] = ' 待确定 '
+        }
+        return tmpList.toString();
+
+
+    }
+
+    /**
+     * 重新投递消息
+     */
+    function retry_consumer() {
+        $.ajax({
+            type: 'POST',
+            url: '$root/message_ajax/retryDevilerMsg.do',
+            data: {
+                'msgId': $("input[name='msgId']").attr("value")
+            },
+            success: function (response, status, xhr) {
+                $("#deliver").text("").append("消息广播投递成功，MsgId：");
+                $("#deliver").append("<br/>" + "<a href='$root/message/queryMsgById.do?msgId=" + response + "><label data-toggle='tooltip' data-placement='right' title='点击查看详情！'>" + response + "</label></a>");
+                $('#deliver').modal('show');
+            },
+            error: function () {
+                alert("重新投递失败！！！");
+            }
+        });
+    }
+
+</script>

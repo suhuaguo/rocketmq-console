@@ -1,10 +1,10 @@
 package com.alibaba.rocketmq.action;
 
-import java.util.Collection;
-
-import javax.servlet.http.HttpServletRequest;
-
+import com.alibaba.rocketmq.common.Table;
+import com.alibaba.rocketmq.common.protocol.route.TopicRouteData;
+import com.alibaba.rocketmq.service.TopicService;
 import org.apache.commons.cli.Option;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
@@ -12,20 +12,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.alibaba.rocketmq.common.Table;
-import com.alibaba.rocketmq.common.protocol.route.TopicRouteData;
-import com.alibaba.rocketmq.service.TopicService;
+import javax.servlet.http.HttpServletRequest;
+import java.util.Collection;
 
 
 /**
- * 
+ * Topic 相关的 信息
+ *
  * @author yankai913@gmail.com
  * @date 2014-2-11
  */
 @Controller
 @RequestMapping("/topic")
 public class TopicAction extends AbstractAction {
-
+    private Logger logger = org.slf4j.LoggerFactory.getLogger(TopicAction.class);
     @Autowired
     TopicService topicService;
 
@@ -47,8 +47,7 @@ public class TopicAction extends AbstractAction {
         try {
             Table table = topicService.list();
             putTable(map, table);
-        }
-        catch (Throwable t) {
+        } catch (Throwable t) {
             putAlertMsg(t, map);
         }
         return TEMPLATE;
@@ -61,8 +60,7 @@ public class TopicAction extends AbstractAction {
         try {
             Table table = topicService.stats(topic);
             putTable(map, table);
-        }
-        catch (Throwable t) {
+        } catch (Throwable t) {
             putAlertMsg(t, map);
         }
         return TEMPLATE;
@@ -85,61 +83,56 @@ public class TopicAction extends AbstractAction {
         try {
             TopicRouteData topicRouteData = topicService.route(topic);
             map.put("topicRouteData", topicRouteData);
-        }
-        catch (Throwable t) {
+        } catch (Throwable t) {
             putAlertMsg(t, map);
         }
         return TEMPLATE;
     }
 
 
-    @RequestMapping(value = "/delete.do", method = { RequestMethod.GET, RequestMethod.POST })
+    @RequestMapping(value = "/delete.do", method = {RequestMethod.GET, RequestMethod.POST})
     public String delete(ModelMap map, HttpServletRequest request,
-            @RequestParam(required = false) String clusterName, @RequestParam String topic) {
+                         @RequestParam(required = false) String clusterName, @RequestParam String topic) {
         Collection<Option> options = topicService.getOptionsForDelete();
         putPublicAttribute(map, "delete", options, request);
         try {
             if (request.getMethod().equals(GET)) {
 
-            }
-            else if (request.getMethod().equals(POST)) {
+            } else if (request.getMethod().equals(POST)) {
                 checkOptions(options);
-                topicService.delete(topic, clusterName);
+                boolean result = topicService.delete(topic, clusterName);
+                logger.info("Topic：{} ,result:{}", topic, result);
                 putAlertTrue(map);
-            }
-            else {
+            } else {
                 throwUnknowRequestMethodException(request);
             }
-        }
-        catch (Throwable t) {
+        } catch (Throwable t) {
             putAlertMsg(t, map);
         }
         return TEMPLATE;
     }
 
 
-    @RequestMapping(value = "/update.do", method = { RequestMethod.GET, RequestMethod.POST })
+    @RequestMapping(value = "/update.do", method = {RequestMethod.GET, RequestMethod.POST})
     public String update(ModelMap map, HttpServletRequest request, @RequestParam String topic,
-            @RequestParam(required = false) String readQueueNums,
-            @RequestParam(required = false) String writeQueueNums,
-            @RequestParam(required = false) String perm, @RequestParam(required = false) String brokerAddr,
-            @RequestParam(required = false) String clusterName) {
+                         @RequestParam(required = false) String readQueueNums,
+                         @RequestParam(required = false) String writeQueueNums,
+                         @RequestParam(required = false) String perm, @RequestParam(required = false) String brokerAddr,
+                         @RequestParam(required = false) String clusterName) {
         Collection<Option> options = topicService.getOptionsForUpdate();
         putPublicAttribute(map, "update", options, request);
         try {
             if (request.getMethod().equals(GET)) {
 
-            }
-            else if (request.getMethod().equals(POST)) {
+            } else if (request.getMethod().equals(POST)) {
                 checkOptions(options);
-                topicService.update(topic, readQueueNums, writeQueueNums, perm, brokerAddr, clusterName);
+                boolean result = topicService.update(topic, readQueueNums, writeQueueNums, perm, brokerAddr, clusterName);
+                logger.info("Topic：{} ,result:{}", topic, result);
                 putAlertTrue(map);
-            }
-            else {
+            } else {
                 throwUnknowRequestMethodException(request);
             }
-        }
-        catch (Throwable t) {
+        } catch (Throwable t) {
             putAlertMsg(t, map);
         }
 

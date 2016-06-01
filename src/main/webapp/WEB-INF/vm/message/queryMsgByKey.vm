@@ -1,2 +1,29 @@
+<h4><label style="color: gold">只能查询当前 6 个小时内的消息</label></h4>
 #form($options $action)
-#table($table)
+
+<table class="table table-bordered table-hover" style=" table-layout:fixed;" id="detail">
+    <thead>
+    <tr>
+        #foreach($th in $!table.thead)
+            <td>$th</td>
+        #end
+    </tr>
+    </thead>
+    #foreach($tr in $!table.tbodyData)
+        <tr>
+            #set ($flag=1)
+            #foreach($td in $tr)
+                #if($flag==1)
+                    <td style="word-wrap:break-word;"><a href='$root/message/queryMsgById.do?msgId=$td'><label
+                            data-toggle="tooltip"
+                            data-placement="right" title="点击有惊喜哦！">$td</label></a></td>
+                #else
+                    <td style="word-wrap:break-word;">$td</td>
+                #end
+                #set( $flag=0)
+
+            #end
+        </tr>
+    #end
+
+</table>

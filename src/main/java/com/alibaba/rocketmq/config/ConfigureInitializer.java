@@ -12,8 +12,20 @@ import com.alibaba.rocketmq.common.MixAll;
  * 
  */
 public class ConfigureInitializer {
-    
+    // nameSer 的地址
     private String namesrvAddr;
+
+    // broker 地址
+    private String brokerAddr;
+
+
+    public String getBrokerAddr() {
+        return brokerAddr;
+    }
+
+    public void setBrokerAddr(String brokerAddr) {
+        this.brokerAddr = brokerAddr;
+    }
 
     public String getNamesrvAddr() {
         return namesrvAddr;
