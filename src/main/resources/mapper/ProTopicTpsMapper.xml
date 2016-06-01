@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.alibaba.rocketmq.mapper.ProTopicTpsMapper">
+
+    <resultMap id="consumerTpsMap" type="com.alibaba.rocketmq.bo.ProTopicTpsBo">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="pro_sum" property="proSum" jdbcType="INTEGER"/>
+        <result column="pro_tps" property="proTps" jdbcType="DOUBLE"/>
+        <result column="pro_avgpt" property="proAvgpt" jdbcType="DOUBLE"/>
+        <result column="pro_topic" property="proTopic" jdbcType="VARCHAR"/>
+        <result column="time" property="time" jdbcType="VARCHAR"/>
+
+    </resultMap>
+
+    <insert id="insert" parameterType="com.alibaba.rocketmq.vo.ProTopicTpsVo">
+    insert into tb_producer_topic_tps
+    (
+       pro_time,
+       pro_sum,
+       pro_tps,
+       pro_avgpt,
+       pro_topic
+    )
+    values(
+       now(),
+       #{proSum},
+       #{proTps},
+       #{proAvgpt},
+       #{proTopic}
+    )
+    </insert>
+
+
+    <!-- offset 是时间的跨度 已经测试过-->
+    <select id="queryByTime" resultMap="consumerTpsMap">
+        select sum(pro_tps) as proTps, sum(pro_sum) as proSum ,pro_time as proTime
+        from tb_producer_topic_tps
+        where pro_topic=#{topic} and pro_time between  #{startTime} and  #{endTime}
+        group by unix_timestamp(pro_time) / #{offset}
+    </select>
+
+
+</mapper>

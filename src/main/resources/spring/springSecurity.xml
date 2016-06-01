@@ -1,0 +1,49 @@
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+             xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+	http://www.springframework.org/schema/security
+	http://www.springframework.org/schema/security/spring-security-3.2.xsd">
+
+    <!-- enable use-expressions -->
+    <http auto-config="true" use-expressions="true" disable-url-rewriting="true">
+        <intercept-url pattern="/js/**" access="permitAll"/>
+        <intercept-url pattern="/easyui/**" access="permitAll"/>
+        <intercept-url pattern="/echart/**" access="permitAll"/>
+        <intercept-url pattern="/css/**" access="permitAll"/>
+        <intercept-url pattern="/login*" access="permitAll"/>
+        <intercept-url pattern="/**" access="hasAnyRole('ROLE_USER') or hasRole('ROLE_ADMIN')"/>
+
+        <!-- access denied page -->
+        <access-denied-handler error-page="/403"/>
+
+        <form-login
+                login-page="/login.do"
+                default-target-url="/welcome1.do"
+                authentication-failure-url="/login.do?error"
+                username-parameter="username"
+                always-use-default-target="true"
+                password-parameter="password"/>
+
+        <logout logout-success-url="/login.do?logout" delete-cookies="JSESSIONID" invalidate-session="true"/>
+        <remember-me key="rocketmq" token-validity-seconds="864000" />
+        <!-- 默认 14 天，当前设置为 60*60*24*10 s，期设置为 10 天-->
+
+    </http>
+
+    <beans:bean name="bcryptEncoder"
+                class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"/>
+    <authentication-manager>
+        <authentication-provider>
+            <password-encoder ref="bcryptEncoder"/>
+            <user-service>
+                <user name="admin" password="$2a$10$kxrt7GLd24gXZYaLfBnCgeljzIao/31x1qcd8DLCyzXErbTN42jJG" authorities="ROLE_ADMIN"/>
+                <user name="guest" password="$2a$10$1fMzfm.4.5Dc2tqfeapV5.j8/dvY64ISCCrix9jw3t20QfwYYQsie" authorities="ROLE_USER"/>
+            </user-service>
+
+        </authentication-provider>
+    </authentication-manager>
+
+
+</beans:beans>

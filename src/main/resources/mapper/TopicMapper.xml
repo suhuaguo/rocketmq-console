@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.alibaba.rocketmq.mapper.TopicServiceMapper">
+
+    <insert id="addTopicDetail" parameterType="java.lang.String">
+        insert into topic_detail
+        (
+          create_time,
+          topic,
+          detail
+        )
+        values(
+           now(),
+           #{topic},
+           #{detail}
+        )
+    </insert>
+
+
+    <!-- 查询 Topic 的详细信息 -->
+    <select id="getTopicDetail" parameterType="java.lang.String" resultType="java.lang.String">
+         SELECT detail
+         FROM topic_detail
+         where topic =#{topic}
+    </select>
+
+    <!-- 查询 该 Topic 对应的记录是否存在  -->
+    <select id="getCount" parameterType="java.lang.String" resultType="java.lang.Integer">
+        SELECT count(1)
+        FROM topic_detail
+        where topic =#{topic}
+    </select>
+
+    <!-- 查询 Topic 的详细信息 -->
+    <update id="updateTopicDetail" parameterType="java.lang.String">
+        update topic_detail
+        set detail =#{detail}
+        where topic =#{topic}
+    </update>
+
+
+</mapper>

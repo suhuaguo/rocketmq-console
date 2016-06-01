@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.alibaba.rocketmq.mapper.MonitorMapper">
+    <resultMap id="baseMap" type="com.alibaba.rocketmq.bo.Monitor">
+        <id column="con_topic" property="conTopic" jdbcType="VARCHAR"/>
+        <result column="diff" property="diff" jdbcType="SMALLINT"/>
+        <result column="delay_time" property="delayTime" jdbcType="TINYINT"/>
+        <result column="status" property="status" jdbcType="TINYINT"/>
+        <result column="modify_time" property="modifyTime" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <insert id="addMonitor" parameterType="com.alibaba.rocketmq.bo.Monitor">
+        INSERT INTO monitor
+        (
+          con_topic,
+          diff,
+          delay_time,
+          status,
+          modify_time
+        )
+        VALUES (
+           #{conTopic},
+           #{diff},
+           #{delayTime},
+           1,
+           UNIX_TIMESTAMP(now())
+        )
+    </insert>
+
+    <update id="deleteMonitor" parameterType="java.lang.String">
+        UPDATE  monitor
+        SET
+           status=0,
+           modify_time=UNIX_TIMESTAMP(now())
+        WHERE con_topic=#{conTopic}
+    </update>
+
+    <update id="updateMonitor" parameterType="com.alibaba.rocketmq.bo.Monitor">
+        UPDATE monitor
+        SET
+            diff=#{diff},
+            delay_time=#{delayTime},
+            status=#{status},
+           modify_time=UNIX_TIMESTAMP(now())
+        WHERE con_topic=#{conTopic}
+    </update>
+
+
+    <update id="startMonitor" parameterType="com.alibaba.rocketmq.bo.Monitor">
+        UPDATE monitor
+        SET
+          status=1,
+          modify_time=UNIX_TIMESTAMP(now())
+        WHERE con_topic=#{conTopic}
+    </update>
+
+
+    <select id="getMonitor" parameterType="com.alibaba.rocketmq.bo.Monitor" resultMap="baseMap">
+        SELECT *
+        FROM monitor
+        WHERE con_topic=#{conTopic}
+    </select>
+
+    <!-- 获取 开启监控的 信息列表，-->
+    <select id="getMonitorList" parameterType="com.alibaba.rocketmq.bo.Monitor" resultMap="baseMap">
+        SELECT *
+        FROM monitor
+        WHERE status=1
+    </select>
+</mapper>

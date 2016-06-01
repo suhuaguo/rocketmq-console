@@ -1,0 +1,202 @@
+<h4><label style="color: gold">以下将显示所有的 ConsumerGroup</label></h4>
+
+<table class="table table-bordered table-hover">
+    <thead>
+    <tr>
+        #foreach($th in $!table.thead)
+            <td>$th</td>
+        #end
+    </tr>
+    </thead>
+
+    <tbody>
+        #foreach($tr in $!table.tbodyData)
+        <tr>
+            #set( $i = 0)
+            #set($offline = false)
+            #foreach($td in $tr)
+
+
+                #if($td=="OFFLINE")
+                    #set($offline=true)
+                    <td style="color: red;width: 100%px;"><label data-toggle="tooltip" data-placement="right"
+
+                                                                 title="机器下线了或者许久没有消费了">$td</label></td>
+                #elseif($td.startsWith("c_"))
+                    <td style="word-wrap:break-word;"><a
+                            href='$root/consumer/consumerProgress.do?groupName=$td'><label data-toggle="tooltip"
+                                                                                           data-placement="right"
+                                                                                           title="点击查看详细！">$td</label></a>
+                    </td>
+
+                #elseif($i==1)
+                    <td style="word-wrap:break-word;">
+                        <a href='$root/topic/stats.do?topic=$td'>
+                            <label data-toggle="tooltip" data-placement="right" title="点击查看详细！">$td</label>
+                        </a>
+                    </td>
+                #else
+                    <td>$td</td>
+                #end
+                #if($i<=1)
+                    #set( $i = $i+1)
+                #end
+            #end
+
+            #if(${sec.adminRole}) #*管理员*#
+                #if($offline==false)
+                    <td>
+                        <button class="btn btn-sm btn-success" type="button" onclick="lookMonitor(this)">查看</button>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-success" type="button" onclick="startupMonitor(this)">启动</button>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-success" type="button" onclick="deleteMonitor(this)">删除</button>
+                    </td>
+                #end
+
+            #end
+        </tr>
+        #end
+    </tbody>
+
+</table>
+
+<div class="modal fade" id="monitorDetail" tabindex="-1" role="dialog" aria-labelledby="monitorModalLabel"
+     style="width: 600px;height: 300px;padding-left: 15px;">
+
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="monitorModalLabel">监控细节</h4>
+    </div>
+    <div class="modal-body">
+        <form class="form-horizontal">
+            <div class="form-group">
+                <label for="recipient-name" class="control-label" style="font-size: 18px;">消费者：</label>
+                <label style="color: green" id="conTopic"></label>
+            </div>
+
+            <div class="form-group">
+                <label for="recipient-name" class="control-label" style="font-size: 18px;">滞后数量：</label>
+                <input type="text" class="form-control" id="diff" style="width: 250px;height: 30px;" value="500"/>
+            </div>
+
+            <div class="form-group">
+                <label for="recipient-name" class="control-label" style="font-size: 18px;">滞后时间：</label>
+                <input type="text" class="form-control" id="delayTime" style="width: 250px;height: 30px;" value="10"
+                       placeholder="分钟"/>
+            </div>
+            <div class="form-group">
+                <label for="message-text" class="control-label" style="font-size: 18px;">接受者：</label>
+                <label for="message-text" class="control-label" style="font-size: 18px;">监控，找青枣</label>
+
+            </div>
+        </form>
+        <div style="">
+            <button class="btn btn-primary" onclick="updateMonitor()">更新</button>
+        </div>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+
+
+    // 查看监控,弹出一个界面
+    function lookMonitor(button) {
+        var group = $(button).parent().parent().find("a > label").text();
+        var topic = $(button).parent().parent().find("td").eq(1).text();
+
+        $("#conTopic").text(group + "@" + topic);
+
+        $.ajax({
+            type: 'POST',
+            url: "$root/monitor/getMonitor.do",
+            data: {
+                'conTopic': $("#conTopic").text()
+            },
+            success: function (response, status, xhr) {
+                if (response != null || response.length != 0) {
+                    $("#diff").val(response.diff);
+                    $("#delayTime").val(response.delayTime);
+                } else {
+                    $("#diff").val(500);
+                    $("#delayTime").val(10);
+                }
+
+                $('#monitorDetail').modal('show');
+
+            },
+            error: function (response, status, xhr) {
+                alert("获取出错！！！");
+            }
+        });
+
+
+    }
+
+    // 启动监控
+    function startupMonitor(button) {
+        var group = $(button).parent().parent().find("a > label").text();
+        var topic = $(button).parent().parent().find("td").eq(1).text();
+
+        $.ajax({
+            type: 'POST',
+            url: "$root/monitor/startMonitor.do",
+            data: {
+                'conTopic': group + "@" + topic
+            },
+            success: function (response, status, xhr) {
+                alert("监控开启成功");
+            },
+            error: function (response, status, xhr) {
+                alert("监控开启失败");
+            }
+        });
+    }
+
+    // 暂停监控
+    function deleteMonitor(button) {
+        var group = $(button).parent().parent().find("a > label").text();
+        var topic = $(button).parent().parent().find("td").eq(1).text();
+
+        $.ajax({
+            type: 'POST',
+            url: "$root/monitor/deleteMonitor.do",
+            data: {
+                'conTopic': group + "@" + topic
+            },
+            success: function (response, status, xhr) {
+                alert("监控暂停成功");
+            },
+            error: function (response, status, xhr) {
+                alert("监控暂停失败");
+            }
+        });
+
+    }
+
+    // 更新或者添加监控
+    function updateMonitor() {
+        $.ajax({
+            type: 'POST',
+            url: "$root/monitor/updateMonitor.do",
+            data: {
+                'conTopic': $("#conTopic").text(),
+                'diff': $("#diff").val(),
+                'delayTime': $("#delayTime").val()
+            },
+            success: function (response, status, xhr) {
+                //  $('#monitorDetail').modal('hide');
+            },
+            error: function (response, status, xhr) {
+                alert("添加监控失败");
+            }
+        });
+
+
+    }
+</script>
+

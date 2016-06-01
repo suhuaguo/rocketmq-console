@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:tx="http://www.springframework.org/schema/tx" xmlns:aop="http://www.springframework.org/schema/aop"
+    xsi:schemaLocation="
+http://www.springframework.org/schema/beans 
+http://www.springframework.org/schema/beans/spring-beans-3.0.xsd 
+http://www.springframework.org/schema/tx 
+http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+">
+    <!-- 配置数据源 -->
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+        <property name="DriverClassName" value="com.mysql.jdbc.Driver" />
+        <!-- JDBC连接串 -->
+        <property name="url" value="${jdbc_url}" />
+        <!-- 数据库用户名称 -->
+        <property name="username" value="${jdbc_username}" />
+        <!-- 数据库密码 -->
+        <property name="password" value="${jdbc_password}" />
+        <!-- 连接池最大使用连接数量 -->
+        <property name="maxActive" value="20" />
+        <!-- 初始化大小 -->
+        <property name="initialSize" value="5" />
+        <!-- 获取连接最大等待时间 -->
+        <property name="maxWait" value="60000" />
+        <!-- 连接池最小空闲 -->
+        <property name="minIdle" value="2" />
+        <!-- 逐出连接的检测时间间隔 -->
+        <property name="timeBetweenEvictionRunsMillis" value="3000" />
+        <!-- 最小逐出时间 -->
+        <property name="minEvictableIdleTimeMillis" value="300000" />
+        <!-- 测试有效用的SQL Query -->
+        <property name="validationQuery" value="SELECT 1" />
+        <!-- 连接空闲时测试是否有效 -->
+        <property name="testWhileIdle" value="true" />
+        <!-- 获取连接时测试是否有效 -->
+        <property name="testOnBorrow" value="false" />
+        <!-- 归还连接时是否测试有效 -->
+        <property name="testOnReturn" value="false" />
+
+        <property name="filters" value="stat" />
+
+        <property name="proxyFilters">
+            <list>
+                <ref bean="statFilter" />
+            </list>
+        </property>
+    </bean>
+
+    <bean id="statFilter" class="com.alibaba.druid.filter.stat.StatFilter">
+        <property name="mergeSql" value="true" />
+        <property name="logSlowSql" value="true" />
+        <property name="slowSqlMillis" value="10000" />
+    </bean>
+
+    <!-- myBatis文件 -->
+
+    <!--mybatis与Spring整合 -->
+
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="mapperLocations" value="classpath:mapper/*.xml"/>
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <bean id="simpleSqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+        <constructor-arg index="0" ref="sqlSessionFactory"/>
+        <constructor-arg index="1" value="SIMPLE"/>
+    </bean>
+
+    <!--Batch Executor 批量更新 -->
+    <bean id="batchSqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+        <constructor-arg index="0" ref="sqlSessionFactory"/>
+        <constructor-arg index="1" value="BATCH"/>
+    </bean>
+
+    <!-- scan for mappers and let them be autowired -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.alibaba.rocketmq.mapper"/>
+        <property name="sqlSessionTemplateBeanName" value="simpleSqlSessionTemplate"/>
+    </bean>
+
+</beans>

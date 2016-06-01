@@ -1,0 +1,192 @@
+<link href="$root/easyui/themes/bootstrap/easyui.css" rel="stylesheet"/>
+<link href="$root/easyui/themes/icon.css" rel="stylesheet"/>
+
+<style type="text/css">
+
+    #showInfo {
+        padding-top: 10px;
+        padding-left: 10px;;
+        padding-right: 10px;;
+    }
+
+    #showInfo tr td:first-child {
+        /*color: green;*/
+        text-align: right;
+        padding-right: 10px;
+        width: 120px;
+    }
+
+    #showInfo tr td:last-child {
+        /*color: red;*/
+        text-align: left;
+        padding-left: 10px;
+        width: 300px;
+    }
+</style>
+
+<h5><label style="color: gold;align-content: center">消息消费TPS</label></h5>
+<form action="/">
+    <table id="showInfo">
+        <tr>
+            <td style="padding-bottom: 10px;">选择Consumer</td>
+            <td>
+                <div class="form-group">
+                    <select class="form-control" name="consumer" id="consumer">
+                        <option value="-1"> --- 请选择 ---</option>
+                    </select>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding-bottom: 10px;">选择Topic</td>
+            <td>
+                <div class="form-group">
+                    <select class="form-control" name="topic" id="topic">
+                        <option value="-1"> --- 请选择 ---</option>
+                    </select>
+                </div>
+            </td>
+        </tr>
+
+        <tr>
+            <td style="padding-bottom: 10px;">采集类型</td>
+            <td>
+                <div class="form-group">
+                    <select class="form-control" name="type" id="type">
+                        <option value="1">TPS</option>
+                        <option value="2">总量</option>
+                    </select>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding-bottom: 10px;">采集周期</td>
+            <td>
+                <div class="form-group">
+                    <select class="form-control" name="round" id="round">
+                        <option value="1">1 分钟</option>
+                        <option value="2">10 分钟</option>
+                        <option value="3">30 分钟</option>
+                        <option value="4">1 小时</option>
+                    </select>
+                </div>
+
+            </td>
+        </tr>
+        <tr>
+            <td>选择时间范围</td>
+            <td><input class="easyui-datetimebox" style="width:150px" id="startTime">
+                <input class="easyui-datetimebox" style="width:150px" id="endTime">
+
+            </td>
+
+        </tr>
+        <tr>
+            <td></td>
+            <td>
+                <button class="btn btn-sm btn-info" type="button" onclick="drawChart()">查询</button>
+            </td>
+
+        </tr>
+    </table>
+</form>
+
+<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+<div id="consumer_tps" style="height:400px"></div>
+
+
+<script src="$root/easyui/jquery.min.js"></script>
+<script src="$root/echart/echarts.js"></script>
+<script src="$root/echart/echarts-all.js"></script>
+
+
+<script type="text/javascript">
+    var consumerTps = null;
+    jQuery(function () {
+        // 页面加载的时候，将执行这里的函数
+        getAllConsumer();
+
+        consumerTps = echarts.init(document.getElementById('consumer_tps'));
+    })
+
+
+    function getTopicByConsumer() {
+        console.info("consumer----" + $("#consumer").find("option:selected").text());
+        $.ajax({
+            type: 'POST',
+            url: '$root/fetch_ajax/get_topic_consumer.do',
+            data: {
+                consumerGroup: $("#consumer").find("option:selected").text()
+            },
+            success: function (response, status, xhr) {
+                $("#topic option").remove();
+                $.each(response, function (i, n) {
+                    $("#topic").append("<option value='" + i + "'>" + n + "</option>");
+                });
+            },
+            error: function () {
+
+            }
+        });
+    }
+
+    function getAllConsumer() {
+        $.ajax({
+            type: 'POST',
+            url: '$root/fetch_ajax/fetch_all_consumer.do',
+            success: function (response, status, xhr) {
+                $.each(response, function (i, n) {
+                    $("#consumer").append("<option value='" + i + "'>" + n + "</option>");
+                });
+
+            },
+            error: function () {
+
+            }
+        });
+    }
+
+
+    // 如果 select 的内容发生了改变
+    $("#consumer").change(function () {
+        getTopicByConsumer();
+    });
+
+
+    function drawChart() {
+        getData();
+    }
+
+
+    function getData() {// 将返回一个 JSON 格式的数据回来。直接使用 setOptions 这个方法就可以啦。
+        $.ajaxSettings.async = false;  //同步才能获取数据
+        var startTime = $("#startTime").datetimebox('getValue');
+        var endTime = $("#endTime").datetimebox('getValue');
+
+        $.ajax({
+            type: 'POST',
+            url: "$root/fetch_ajax/fetch_consumer_tps.do",
+            dataType: 'json', //这里的 datatype 的key-value 一定要的。不要将会出现乱码以及 图表无法绘制
+            data: {
+                'topic': $("#topic").find("option:selected").text(),
+                'consumerGroup': $("#consumer").find("option:selected").text(),
+                'startTime': startTime,
+                'endTime': endTime,
+                'round': $("#round").val(),
+                'type':$("#type").val()
+
+            },
+            success: function (response, status, xhr) {
+                consumerTps.hideLoading();
+                consumerTps.setOption(response, true);
+            },
+            error: function (response, status, xhr) {
+                alert("数据加载出错！！！");
+            }
+
+        });
+
+
+    }
+
+</script>
