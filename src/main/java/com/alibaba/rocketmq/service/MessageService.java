@@ -21,7 +21,6 @@ import com.alibaba.rocketmq.tools.command.message.QueryMsgByIdSubCommand;
 import com.alibaba.rocketmq.tools.command.message.QueryMsgByKeySubCommand;
 import com.alibaba.rocketmq.tools.command.message.QueryMsgByOffsetSubCommand;
 import com.alibaba.rocketmq.validate.CmdTrace;
-import com.twodfire.util.HessianUtil;
 import org.apache.commons.cli.Option;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -73,7 +72,7 @@ public class MessageService extends AbstractService {
 
             map.put("Keys", "[" + msg.getKeys() + "]");
 
-            map.put("Message Body", new String(HessianUtil.deserialize(msg.getBody()).toString())); // 消息体的内容,有个 S 字符串在里面
+            map.put("Message Body", new String(msg.getBody()).toString()); // 消息体的内容,有个 S 字符串在里面
 
             map.put("Queue ID", String.valueOf(msg.getQueueId()));
 
@@ -266,9 +265,7 @@ public class MessageService extends AbstractService {
             msg.setKeys(keys);
 
             SendResult sendResult = producer.send(msg);
-            logger.error("重新投递消息成功----MsgId:{} ,topic:{} ,tag:{} ,key:{} ,body:{}", sendResult.getMsgId(), topic, tag, keys, new String(HessianUtil.deserialize(msg.getBody()).toString()));
             System.out.println("sdfsdf----" + sendResult.getMsgId());
-            System.out.println("body---" + new String(HessianUtil.deserialize(msg.getBody()).toString()));
 
             return sendResult.getMsgId();
 
